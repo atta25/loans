@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Préstamos">
+<meta name="theme-color" content="#0F6E56">
+<title>Gestión de Préstamos</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F5F5F0; color: #1a1a1a; min-height: 100vh; }
+.header { background: #0F6E56; color: white; padding: 52px 20px 16px; position: sticky; top: 0; z-index: 100; }
+.header-row { display: flex; justify-content: space-between; align-items: flex-end; }
+.header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+.header-date { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+.btn-alerta-header { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 12px; font-weight: 500; padding: 6px 12px; border-radius: 20px; cursor: pointer; }
+.tabs { display: flex; background: white; border-bottom: 1px solid #E8E8E0; position: sticky; top: 96px; z-index: 99; overflow-x: auto; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: 1; min-width: 65px; padding: 12px 6px; font-size: 12px; font-weight: 500; color: #888; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; text-align: center; }
+.tab.active { color: #0F6E56; border-bottom-color: #0F6E56; }
+.content { padding: 16px; max-width: 600px; margin: 0 auto; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.stat { background: white; border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+.stat-value { font-size: 17px; font-weight: 600; color: #1a1a1a; }
+.stat-value.green { color: #0F6E56; }
+.stat-value.red { color: #C0392B; }
+.stat-value.blue { color: #1A5276; }
+.section-title { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin: 16px 0 10px; }
+.card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.card.mora { border-left: 4px solid #E74C3C; }
+.card.pronto { border-left: 4px solid #F39C12; }
+.card.historial { border-left: 4px solid #0F6E56; }
+.card.historial-renovado { border-left: 4px solid #1A5276; }
+.card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.av-normal { background: #E1F5EE; color: #0F6E56; }
+.av-mora { background: #FDEDEC; color: #C0392B; }
+.av-pronto { background: #FEF9E7; color: #D68910; }
+.av-hist { background: #EBF5FB; color: #1A5276; }
+.badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.b-new { background: #FEF9E7; color: #D68910; }
+.b-known { background: #E1F5EE; color: #0F6E56; }
+.b-manual { background: #EBF5FB; color: #1A5276; }
+.b-mora { background: #FDEDEC; color: #C0392B; }
+.b-pronto { background: #FEF9E7; color: #D68910; }
+.b-renovado { background: #EBF5FB; color: #1A5276; }
+.b-pagado { background: #E1F5EE; color: #0F6E56; }
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #F5F5F0; font-size: 14px; }
+.info-row:last-child { border-bottom: none; }
+.info-label { color: #888; }
+.info-val { font-weight: 600; color: #1a1a1a; text-align: right; margin-left: 8px; }
+.mora-box { background: #FDEDEC; border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+.mora-title { font-size: 12px; font-weight: 700; color: #C0392B; margin-bottom: 6px; }
+.mora-row { display: flex; justify-content: space-between; font-size: 13px; color: #922B21; padding: 2px 0; }
+.alerta-box { background: #FEF9E7; border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+.alerta-title { font-size: 12px; font-weight: 700; color: #D68910; margin-bottom: 4px; }
+.alerta-text { font-size: 13px; color: #7D6608; }
+.total-box { background: #F5F5F0; border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+.total-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: #555; }
+.total-final { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; color: #1a1a1a; padding-top: 8px; margin-top: 6px; border-top: 1px solid #DDD; }
+.hist-box { background: #EBF5FB; border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+.hist-title { font-size: 12px; font-weight: 700; color: #1A5276; margin-bottom: 6px; }
+.hist-row { display: flex; justify-content: space-between; font-size: 13px; color: #1A5276; padding: 2px 0; }
+.actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.btn { border-radius: 10px; padding: 9px 16px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; }
+.btn-green { background: #0F6E56; color: white; }
+.btn-amber { background: #F39C12; color: white; }
+.btn-red { background: #E74C3C; color: white; }
+.btn-gray { background: #ECF0F1; color: #555; }
+.btn-blue { background: #1A5276; color: white; }
+.btn-full { width: 100%; margin-bottom: 10px; }
+.btn-notif { background: #0F6E56; color: white; width: 100%; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 14px; border: none; cursor: pointer; margin-bottom: 12px; }
+.form-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.form-label { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.04em; }
+.form-input { width: 100%; padding: 12px 14px; border: 1.5px solid #E8E8E0; border-radius: 10px; font-size: 15px; color: #1a1a1a; background: #FAFAFA; margin-bottom: 14px; -webkit-appearance: none; }
+.form-input:focus { outline: none; border-color: #0F6E56; background: white; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-hint { font-size: 11px; color: #AAA; margin-top: -10px; margin-bottom: 14px; }
+.tasa-manual-row { display: flex; gap: 10px; align-items: flex-start; }
+.tasa-manual-row select { flex: 1; }
+.tasa-manual-input { flex: 1; display: none; }
+.tasa-manual-input.visible { display: block; }
+.preview-box { background: #E1F5EE; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+.preview-row { display: flex; justify-content: space-between; font-size: 14px; padding: 3px 0; color: #0F6E56; }
+.preview-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; color: #085041; padding-top: 8px; margin-top: 6px; border-top: 1px solid #9FE1CB; }
+.alert { padding: 12px 16px; border-radius: 12px; font-size: 14px; margin-bottom: 12px; }
+.alert-green { background: #E1F5EE; color: #0F6E56; }
+.alert-red { background: #FDEDEC; color: #C0392B; }
+.alert-amber { background: #FEF9E7; color: #D68910; }
+.alert-blue { background: #EBF5FB; color: #1A5276; }
+.empty { text-align: center; padding: 40px 20px; color: #AAA; font-size: 15px; }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.notif-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 999; background: #0F6E56; color: white; padding: 60px 20px 16px; transform: translateY(-100%); transition: transform 0.3s ease; }
+.notif-banner.show { transform: translateY(0); }
+.notif-banner h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.notif-banner p { font-size: 14px; opacity: 0.9; }
+.notif-close { position: absolute; top: 52px; right: 16px; background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+.section { display: none; }
+.section.active { display: block; }
+.hist-mes { font-size: 11px; font-weight: 700; color: #AAA; text-transform: uppercase; letter-spacing: 0.06em; margin: 14px 0 8px; }
+.resumen-anual { background: white; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.filtro-row { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; }
+.filtro-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid #E8E8E0; background: white; font-size: 13px; font-weight: 500; color: #888; cursor: pointer; white-space: nowrap; }
+.filtro-btn.active { background: #0F6E56; color: white; border-color: #0F6E56; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div>
+      <h1>Préstamos</h1>
+      <div class="header-date" id="fecha-hoy"></div>
+    </div>
+    <button class="btn-alerta-header" onclick="mostrarBanner()">Ver alertas</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('dashboard',this)">Resumen</button>
+  <button class="tab" onclick="showTab('clientes',this)">Clientes</button>
+  <button class="tab" onclick="showTab('historial',this)">Historial</button>
+  <button class="tab" onclick="showTab('nuevo',this)">+ Nuevo</button>
+  <button class="tab" onclick="showTab('alertas',this)">Alertas</button>
+</div>
+
+<div class="content">
+  <div id="tab-dashboard" class="section active"></div>
+  <div id="tab-clientes" class="section"></div>
+  <div id="tab-historial" class="section"></div>
+  <div id="tab-alertas" class="section"></div>
+
+  <div id="tab-nuevo" class="section">
+    <div class="form-card">
+      <label class="form-label">Nombre completo</label>
+      <input class="form-input" type="text" id="f-nombre" placeholder="Ej: Juan Pérez">
+
+      <div class="form-grid">
+        <div>
+          <label class="form-label">Teléfono</label>
+          <input class="form-input" type="tel" id="f-tel" placeholder="11 1234-5678">
+        </div>
+        <div>
+          <label class="form-label">Tipo de cliente</label>
+          <select class="form-input" id="f-tipo">
+            <option value="conocido">Conocido 35%</option>
+            <option value="nuevo">Nuevo 40%</option>
+            <option value="manual">Manual</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="form-label">Dirección</label>
+      <input class="form-input" type="text" id="f-dir" placeholder="Ej: Av. Corrientes 1234">
+
+      <div class="form-grid">
+        <div>
+          <label class="form-label">Monto ($)</label>
+          <input class="form-input" type="number" id="f-monto" placeholder="500000">
+        </div>
+        <div>
+          <label class="form-label">Tasa mensual (%)</label>
+          <input class="form-input" type="number" id="f-tasa-manual" placeholder="Ej: 30" min="1" max="100" style="display:none;">
+          <div id="f-tasa-display" style="padding:12px 14px;background:#F0F0EA;border-radius:10px;font-size:15px;color:#888;margin-bottom:14px;" id="f-tasa-auto">Se calcula según tipo</div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div>
+          <label class="form-label">Fecha inicio</label>
+          <input class="form-input" type="date" id="f-fecha">
+        </div>
+        <div>
+          <label class="form-label">Fecha devolución</label>
+          <input class="form-input" type="date" id="f-venc">
+        </div>
+      </div>
+      <p class="form-hint">La fecha de devolución se calcula a 1 mes. Podés modificarla.</p>
+
+      <label class="form-label">Notas</label>
+      <textarea class="form-input" id="f-notas" rows="3" placeholder="Garantías, referencias, observaciones..."></textarea>
+
+      <div id="preview-box"></div>
+      <button class="btn btn-gray btn-full" onclick="calcularPreview()">Calcular antes de guardar</button>
+      <button class="btn btn-green btn-full" onclick="guardar()">Guardar préstamo</button>
+      <div id="msg-form"></div>
+    </div>
+  </div>
+</div>
+
+<div class="notif-banner" id="notif-banner">
+  <button class="notif-close" onclick="cerrarBanner()">✕</button>
+  <h3 id="notif-title"></h3>
+  <p id="notif-body"></p>
+</div>
+
+<script>
+const MORA_DIA = 10000;
+const DIAS_ALERTA = 4;
+const KEY = 'prestamos_v4';
+const KEY_HIST = 'cobros_v4';
+
+function cargar() { try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch(e) { return []; } }
+function cargarHist() { try { return JSON.parse(localStorage.getItem(KEY_HIST)||'[]'); } catch(e) { return []; } }
+function guardarLS(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch(e) {} }
+function guardarHist(d) { try { localStorage.setItem(KEY_HIST, JSON.stringify(d)); } catch(e) {} }
+
+let P = cargar();
+let HIST = cargarHist();
+
+// Escuchar cambio de tipo para mostrar/ocultar tasa manual
+document.getElementById('f-tipo').addEventListener('change', function() {
+  const manual = this.value === 'manual';
+  document.getElementById('f-tasa-manual').style.display = manual ? 'block' : 'none';
+  document.getElementById('f-tasa-display').style.display = manual ? 'none' : 'block';
+  document.getElementById('f-fecha').addEventListener('change', autoVenc);
+});
+
+document.getElementById('f-fecha').addEventListener('change', autoVenc);
+function autoVenc() {
+  const f = document.getElementById('f-fecha').value;
+  if(f) document.getElementById('f-venc').value = addMes(f);
+}
+
+function pesos(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+function ini(n) { return n.split(' ').slice(0,2).map(x=>x[0]?.toUpperCase()||'').join(''); }
+function diasHasta(s) { if(!s) return 999; const h=new Date(); h.setHours(0,0,0,0); return Math.round((new Date(s+'T00:00:00')-h)/86400000); }
+function addMes(s) { const d=new Date(s+'T00:00:00'); d.setMonth(d.getMonth()+1); return d.toISOString().split('T')[0]; }
+function fmtFecha(s) { if(!s||s==='-') return '-'; const [y,m,d]=s.split('-'); return d+'/'+m+'/'+y; }
+function fmtFechaHora(iso) { const d=new Date(iso); return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); }
+function tasaBase(t) { return t==='nuevo'?40:35; }
+
+function getTasa() {
+  const tipo = document.getElementById('f-tipo').value;
+  if(tipo === 'manual') {
+    const v = parseFloat(document.getElementById('f-tasa-manual').value);
+    return isNaN(v) || v <= 0 ? null : v;
+  }
+  return tasaBase(tipo);
+}
+
+function deuda(p) {
+  const cap=p.monto, int=cap*p.tasa/100;
+  const dias=diasHasta(p.vencimiento);
+  const diasMora=dias<0?Math.abs(dias):0;
+  const rec=diasMora*MORA_DIA;
+  return { cap, int, diasMora, rec, total: cap+int+rec };
+}
+
+function alertas() { return P.filter(p=>p.estado!=='pagado'&&diasHasta(p.vencimiento)>=0&&diasHasta(p.vencimiento)<=DIAS_ALERTA); }
+function mora() { return P.filter(p=>p.estado!=='pagado'&&diasHasta(p.vencimiento)<0); }
+
+function showTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(el) el.classList.add('active');
+  if(tab==='dashboard') renderDash();
+  if(tab==='clientes') renderClientes();
+  if(tab==='historial') renderHistorial('todos');
+  if(tab==='alertas') renderAlertas();
+}
+
+function mostrarBanner() {
+  const al=alertas(), mo=mora();
+  const banner=document.getElementById('notif-banner');
+  if(al.length===0&&mo.length===0) {
+    document.getElementById('notif-title').textContent='Sin alertas pendientes';
+    document.getElementById('notif-body').textContent='Todos los préstamos están al día.';
+  } else {
+    let cuerpo=[];
+    mo.forEach(p=>{ const d=deuda(p); cuerpo.push(p.nombre+' — '+d.diasMora+'d mora — '+pesos(d.total)); });
+    al.forEach(p=>{ const dias=diasHasta(p.vencimiento); cuerpo.push(p.nombre+' vence '+(dias===0?'HOY':'en '+dias+'d')+' — '+pesos(deuda(p).total)); });
+    document.getElementById('notif-title').textContent=(mo.length>0?mo.length+' en mora  ':'')+( al.length>0?al.length+' por vencer':'');
+    document.getElementById('notif-body').innerHTML=cuerpo.join('<br>');
+  }
+  banner.classList.add('show');
+  setTimeout(()=>banner.classList.remove('show'), 6000);
+  if('Notification' in window&&Notification.permission==='granted') {
+    al.forEach(p=>{ const dias=diasHasta(p.vencimiento); new Notification('Vencimiento — '+p.nombre,{body:p.nombre+' vence '+(dias===0?'HOY':'en '+dias+' día(s)')+'. Total: '+pesos(deuda(p).total)}); });
+  }
+}
+
+function cerrarBanner() { document.getElementById('notif-banner').classList.remove('show'); }
+
+function renderDash() {
+  const act=P.filter(p=>p.estado!=='pagado');
+  const cap=act.reduce((s,p)=>s+p.monto,0);
+  const ints=act.reduce((s,p)=>s+p.monto*p.tasa/100,0);
+  const mo=mora(), al=alertas();
+  const recTotal=mo.reduce((s,p)=>s+Math.abs(diasHasta(p.vencimiento))*MORA_DIA,0);
+  const totalCobrado=HIST.reduce((s,h)=>s+h.totalCobrado,0);
+
+  let h=`<div class="stat-grid">
+    <div class="stat"><div class="stat-label">Capital prestado</div><div class="stat-value">${pesos(cap)}</div></div>
+    <div class="stat"><div class="stat-label">Intereses pendientes</div><div class="stat-value green">${pesos(ints)}</div></div>
+    <div class="stat"><div class="stat-label">Activos</div><div class="stat-value">${act.length}</div></div>
+    <div class="stat"><div class="stat-label">Total cobrado</div><div class="stat-value blue">${pesos(totalCobrado)}</div></div>
+  </div>`;
+
+  if(recTotal>0) h+=`<div class="alert alert-red"><strong>Recargos mora acumulados:</strong> ${pesos(recTotal)}</div>`;
+  if(al.length>0) h+=`<div class="alert alert-amber"><strong>Por vencer:</strong> ${al.map(p=>{const d=diasHasta(p.vencimiento);return p.nombre+(d===0?' (HOY)':' (en '+d+'d)')}).join(', ')}</div>`;
+  if(mo.length===0&&al.length===0) h+=`<div class="alert alert-green">Todo en orden. Sin alertas urgentes.</div>`;
+
+  h+=`<div class="section-title">Próximos vencimientos</div>`;
+  const prox=[...act].sort((a,b)=>new Date(a.vencimiento)-new Date(b.vencimiento)).slice(0,6);
+  if(prox.length===0) { h+='<div class="empty"><div class="empty-icon">📋</div>Sin préstamos activos</div>'; }
+  else {
+    prox.forEach(p=>{
+      const dias=diasHasta(p.vencimiento), d=deuda(p);
+      const enMora=dias<0, pv=dias>=0&&dias<=DIAS_ALERTA;
+      let diasTxt=enMora?Math.abs(dias)+'d de mora':dias===0?'HOY':'en '+dias+'d';
+      let diasColor=enMora?'#C0392B':pv?'#D68910':'#0F6E56';
+      h+=`<div class="card ${enMora?'mora':pv?'pronto':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div><span style="font-size:16px;font-weight:600;">${p.nombre}</span><br>
+          <span style="font-size:13px;color:#888;">${pesos(p.monto)} · ${p.tasa}% · ${fmtFecha(p.vencimiento)}</span></div>
+          <span style="font-size:13px;font-weight:700;color:${diasColor};">${diasTxt}</span>
+        </div>
+        ${enMora?`<div class="mora-box" style="margin-top:8px;margin-bottom:0;">
+          <div class="mora-row"><span>Recargo (${d.diasMora}d)</span><span>${pesos(d.rec)}</span></div>
+          <div class="mora-row" style="font-weight:700;border-top:1px solid #F1948A;margin-top:6px;padding-top:6px;"><span>Total adeudado HOY</span><span>${pesos(d.total)}</span></div>
+        </div>`:''}
+        ${pv&&!enMora?`<div class="alerta-box" style="margin-top:8px;margin-bottom:0;"><div class="alerta-title">Total a cobrar: ${pesos(d.total)}</div></div>`:''}
+      </div>`;
+    });
+  }
+
+  if(HIST.length>0) {
+    const ultimosCobros=HIST.slice(-3).reverse();
+    h+=`<div class="section-title">Últimos cobros registrados</div>`;
+    ultimosCobros.forEach(c=>{
+      h+=`<div class="card historial">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div><span style="font-weight:600;">${c.nombre}</span><br>
+          <span style="font-size:12px;color:#888;">${fmtFechaHora(c.fecha)} · ${c.tipo==='renovacion'?'Renovación':'Pago total'}</span></div>
+          <span style="font-weight:700;color:#0F6E56;">${pesos(c.totalCobrado)}</span>
+        </div>
+      </div>`;
+    });
+  }
+
+  document.getElementById('tab-dashboard').innerHTML=h;
+}
+
+function renderClientes() {
+  const el=document.getElementById('tab-clientes');
+  if(P.length===0){el.innerHTML='<div class="empty"><div class="empty-icon">👤</div>No hay clientes registrados</div>';return;}
+  const ag={};
+  P.forEach(p=>{if(!ag[p.id_cliente])ag[p.id_cliente]=[];ag[p.id_cliente].push(p);});
+  let h='';
+  Object.values(ag).forEach(grupo=>{
+    const ul=grupo[grupo.length-1];
+    const ac=grupo.find(p=>p.estado==='activo'||p.estado==='renovado');
+    const hist=grupo.length;
+    const enMora=ac&&diasHasta(ac.vencimiento)<0;
+    const pv=ac&&diasHasta(ac.vencimiento)>=0&&diasHasta(ac.vencimiento)<=DIAS_ALERTA;
+    const cobrosCliente=HIST.filter(c=>c.id_cliente===ul.id_cliente);
+    const totalCobradoCliente=cobrosCliente.reduce((s,c)=>s+c.totalCobrado,0);
+
+    h+=`<div class="card ${enMora?'mora':pv?'pronto':''}">
+      <div class="card-top">
+        <div class="avatar ${enMora?'av-mora':pv?'av-pronto':'av-normal'}">${ini(ul.nombre)}</div>
+        <div style="flex:1;">
+          <div style="font-size:16px;font-weight:600;">${ul.nombre}</div>
+          <div style="font-size:12px;color:#888;">${ul.telefono||'Sin teléfono'} · ${hist} préstamo(s)</div>
+        </div>
+        <span class="badge ${ul.tipo==='nuevo'?'b-new':ul.tipo==='manual'?'b-manual':'b-known'}">${ul.tipo==='nuevo'?'Nuevo':ul.tipo==='manual'?'Manual':'Conocido'}</span>
+      </div>`;
+
+    if(ac){
+      const d=deuda(ac), dias=diasHasta(ac.vencimiento), em=dias<0, pvc=dias>=0&&dias<=DIAS_ALERTA;
+      h+=`<div class="info-row"><span class="info-label">Teléfono</span><span class="info-val">${ac.telefono||'-'}</span></div>
+        <div class="info-row"><span class="info-label">Dirección</span><span class="info-val" style="font-size:13px;max-width:55%;">${ac.direccion||'-'}</span></div>
+        <div class="info-row"><span class="info-label">Capital</span><span class="info-val">${pesos(d.cap)}</span></div>
+        <div class="info-row"><span class="info-label">Tasa mensual</span><span class="info-val">${ac.tasa}%</span></div>
+        <div class="info-row"><span class="info-label">Interés a cobrar</span><span class="info-val" style="color:#0F6E56;">${pesos(d.int)}</span></div>
+        <div class="info-row"><span class="info-label">Fecha devolución</span><span class="info-val">${fmtFecha(ac.vencimiento)}${dias===0?' (HOY)':dias>0&&dias<=DIAS_ALERTA?' (en '+dias+'d)':dias<0?' ('+Math.abs(dias)+'d vencido)':''}</span></div>`;
+
+      if(em){h+=`<div class="mora-box"><div class="mora-title">En mora — ${d.diasMora} día(s) de atraso</div>
+        <div class="mora-row"><span>Recargo (${d.diasMora} × ${pesos(MORA_DIA)})</span><span>${pesos(d.rec)}</span></div></div>`;}
+      if(pvc&&!em){h+=`<div class="alerta-box"><div class="alerta-title">Vence ${dias===0?'HOY':'en '+dias+' día(s)'}</div>
+        <div class="alerta-text">Coordinar cobro con ${ac.nombre.split(' ')[0]}</div></div>`;}
+
+      h+=`<div class="total-box">
+        <div class="total-row"><span>Capital</span><span>${pesos(d.cap)}</span></div>
+        <div class="total-row"><span>Interés (${ac.tasa}%)</span><span>${pesos(d.int)}</span></div>
+        ${d.rec>0?'<div class="total-row" style="color:#C0392B;"><span>Recargo mora</span><span>'+pesos(d.rec)+'</span></div>':''}
+        <div class="total-final"><span>Total a cobrar</span><span>${pesos(d.total)}</span></div>
+      </div>`;
+
+      if(totalCobradoCliente>0){h+=`<div class="hist-box"><div class="hist-title">Total cobrado históricamente</div>
+        <div class="hist-row"><span>${cobrosCliente.length} cobro(s) registrado(s)</span><span>${pesos(totalCobradoCliente)}</span></div></div>`;}
+
+      if(ac.notas){h+=`<div class="info-row"><span class="info-label">Notas</span><span class="info-val" style="font-size:12px;max-width:60%;">${ac.notas}</span></div>`;}
+
+      h+=`<div class="actions">
+        <button class="btn btn-green" onclick="cobrado('${ac.id}')">Cobrado total</button>
+        ${ac.estado!=='renovado'?`<button class="btn btn-amber" onclick="renovar('${ac.id}')">Solo interés + renovar</button>`:'<span class="badge b-renovado" style="padding:9px 12px;">Ya renovado</span>'}
+        <button class="btn btn-red" onclick="eliminar('${ac.id}')">Eliminar</button>
+      </div>`;
+    } else {
+      h+=`<div class="info-row"><span class="info-label">Teléfono</span><span class="info-val">${ul.telefono||'-'}</span></div>
+        <div class="info-row"><span class="info-label">Dirección</span><span class="info-val" style="font-size:13px;">${ul.direccion||'-'}</span></div>`;
+      if(totalCobradoCliente>0){h+=`<div class="hist-box" style="margin-top:10px;"><div class="hist-title">Total cobrado históricamente</div>
+        <div class="hist-row"><span>${cobrosCliente.length} cobro(s)</span><span>${pesos(totalCobradoCliente)}</span></div></div>`;}
+      h+=`<div style="font-size:14px;color:#AAA;padding:8px 0;">Sin préstamo activo actualmente.</div>`;
+    }
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
+function renderHistorial(filtro) {
+  const el=document.getElementById('tab-historial');
+  let datos=HIST;
+  if(filtro!=='todos') datos=HIST.filter(h=>h.tipo===filtro);
+  datos=[...datos].reverse();
+
+  const totalGanado=datos.reduce((s,h)=>s+h.interesCobrado+(h.recargoCobrado||0),0);
+  const totalCapital=datos.filter(h=>h.tipo==='pago_total').reduce((s,h)=>s+h.capital,0);
+
+  let h=`<div class="resumen-anual">
+    <div class="section-title" style="margin-top:0;">Resumen del período</div>
+    <div class="info-row"><span class="info-label">Cobros registrados</span><span class="info-val">${datos.length}</span></div>
+    <div class="info-row"><span class="info-label">Ganancias (intereses + recargos)</span><span class="info-val" style="color:#0F6E56;">${pesos(totalGanado)}</span></div>
+    <div class="info-row"><span class="info-label">Capital recuperado</span><span class="info-val">${pesos(totalCapital)}</span></div>
+    <div class="info-row" style="border:none;"><span class="info-label">Total recibido</span><span class="info-val" style="color:#1A5276;font-size:16px;">${pesos(datos.reduce((s,h)=>s+h.totalCobrado,0))}</span></div>
+  </div>
+  <div class="filtro-row">
+    <button class="filtro-btn ${filtro==='todos'?'active':''}" onclick="renderHistorial('todos')">Todos</button>
+    <button class="filtro-btn ${filtro==='pago_total'?'active':''}" onclick="renderHistorial('pago_total')">Pagos totales</button>
+    <button class="filtro-btn ${filtro==='renovacion'?'active':''}" onclick="renderHistorial('renovacion')">Renovaciones</button>
+  </div>`;
+
+  if(datos.length===0){h+='<div class="empty"><div class="empty-icon">📊</div>No hay cobros registrados todavía</div>';el.innerHTML=h;return;}
+
+  let mesActual='';
+  datos.forEach(c=>{
+    const d=new Date(c.fecha);
+    const mes=d.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+    if(mes!==mesActual){ h+=`<div class="hist-mes">${mes}</div>`; mesActual=mes; }
+    const esRen=c.tipo==='renovacion';
+    h+=`<div class="card ${esRen?'historial-renovado':'historial'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <span style="font-size:15px;font-weight:600;">${c.nombre}</span><br>
+          <span style="font-size:12px;color:#888;">${fmtFechaHora(c.fecha)}</span>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-size:16px;font-weight:700;color:${esRen?'#1A5276':'#0F6E56'};">${pesos(c.totalCobrado)}</span><br>
+          <span class="badge ${esRen?'b-renovado':'b-pagado'}">${esRen?'Renovación':'Pago total'}</span>
+        </div>
+      </div>
+      <div class="info-row"><span class="info-label">Capital prestado</span><span class="info-val">${pesos(c.capital)}</span></div>
+      <div class="info-row"><span class="info-label">Interés cobrado (${c.tasa}%)</span><span class="info-val" style="color:#0F6E56;">${pesos(c.interesCobrado)}</span></div>
+      ${c.recargoCobrado>0?'<div class="info-row"><span class="info-label">Recargo mora cobrado</span><span class="info-val" style="color:#C0392B;">'+pesos(c.recargoCobrado)+'</span></div>':''}
+      ${esRen?'<div class="info-row"><span class="info-label">Capital se renovó por 1 mes más</span><span class="info-val">Nueva tasa: '+c.nuevaTasa+'%</span></div>':'<div class="info-row"><span class="info-label">Capital devuelto</span><span class="info-val">'+pesos(c.capital)+'</span></div>'}
+    </div>`;
+  });
+
+  el.innerHTML=h;
+}
+
+function renderAlertas() {
+  const al=alertas(), mo=mora();
+  let h=`<button class="btn-notif" onclick="pedirNotif()">Activar notificaciones en iPhone</button>
+    <div class="alert alert-blue">Las alertas se activan ${DIAS_ALERTA} días antes del vencimiento.</div>`;
+  if(mo.length>0){
+    h+=`<div class="section-title">En mora</div>`;
+    mo.forEach(p=>{
+      const d=deuda(p);
+      h+=`<div class="card mora">
+        <div class="card-top">
+          <div class="avatar av-mora">${ini(p.nombre)}</div>
+          <div><div style="font-size:16px;font-weight:600;">${p.nombre}</div><div style="font-size:12px;color:#888;">${p.telefono||'Sin teléfono'} · ${p.direccion||'Sin dirección'}</div></div>
+          <span class="badge b-mora">${d.diasMora}d mora</span>
+        </div>
+        <div class="info-row"><span class="info-label">Venció el</span><span class="info-val">${fmtFecha(p.vencimiento)}</span></div>
+        <div class="mora-box">
+          <div class="mora-row"><span>Recargo (${d.diasMora} × ${pesos(MORA_DIA)})</span><span>${pesos(d.rec)}</span></div>
+          <div class="mora-row" style="font-weight:700;border-top:1px solid #F1948A;margin-top:6px;padding-top:6px;"><span>Total adeudado HOY</span><span>${pesos(d.total)}</span></div>
+        </div>
+      </div>`;
+    });
+  }
+  if(al.length>0){
+    h+=`<div class="section-title">Vencen en ${DIAS_ALERTA} días</div>`;
+    al.forEach(p=>{
+      const dias=diasHasta(p.vencimiento), d=deuda(p);
+      h+=`<div class="card pronto">
+        <div class="card-top">
+          <div class="avatar av-pronto">${ini(p.nombre)}</div>
+          <div><div style="font-size:16px;font-weight:600;">${p.nombre}</div><div style="font-size:12px;color:#888;">${p.telefono||'Sin teléfono'}</div></div>
+          <span class="badge b-pronto">${dias===0?'HOY':'en '+dias+'d'}</span>
+        </div>
+        <div class="info-row"><span class="info-label">Devolución</span><span class="info-val">${fmtFecha(p.vencimiento)}</span></div>
+        <div class="info-row"><span class="info-label">Dirección</span><span class="info-val" style="font-size:13px;">${p.direccion||'-'}</span></div>
+        <div class="alerta-box">
+          <div class="alerta-title">Total a cobrar: ${pesos(d.total)}</div>
+          <div class="alerta-text">Contactar a ${p.nombre.split(' ')[0]} para coordinar el cobro</div>
+        </div>
+      </div>`;
+    });
+  }
+  if(mo.length===0&&al.length===0){h+='<div class="empty"><div class="empty-icon">✅</div>No hay alertas pendientes</div>';}
+  document.getElementById('tab-alertas').innerHTML=h;
+}
+
+function calcularPreview(){
+  const monto=parseFloat(document.getElementById('f-monto').value);
+  const tipo=document.getElementById('f-tipo').value;
+  const fecha=document.getElementById('f-fecha').value;
+  const el=document.getElementById('preview-box');
+  if(!monto||!fecha){el.innerHTML='<div class="alert alert-red">Completá monto y fecha primero.</div>';return;}
+  let tasa;
+  if(tipo==='manual'){
+    tasa=parseFloat(document.getElementById('f-tasa-manual').value);
+    if(!tasa||tasa<=0){el.innerHTML='<div class="alert alert-red">Ingresá la tasa manual.</div>';return;}
+  } else { tasa=tasaBase(tipo); }
+  const int=monto*tasa/100;
+  const venc=document.getElementById('f-venc').value||addMes(fecha);
+  el.innerHTML=`<div class="preview-box">
+    <div class="preview-row"><span>Tasa mensual</span><span>${tasa}%</span></div>
+    <div class="preview-row"><span>Interés a cobrar</span><span>${pesos(int)}</span></div>
+    <div class="preview-row"><span>Recargo mora</span><span>${pesos(MORA_DIA)}/día de atraso</span></div>
+    <div class="preview-row"><span>Fecha devolución</span><span>${fmtFecha(venc)}</span></div>
+    <div class="preview-row"><span>Alerta automática</span><span>${DIAS_ALERTA} días antes</span></div>
+    <div class="preview-total"><span>Total a cobrar</span><span>${pesos(monto+int)}</span></div>
+  </div>`;
+}
+
+function guardar(){
+  const nombre=document.getElementById('f-nombre').value.trim();
+  const tel=document.getElementById('f-tel').value.trim();
+  const tipo=document.getElementById('f-tipo').value;
+  const monto=parseFloat(document.getElementById('f-monto').value);
+  const fecha=document.getElementById('f-fecha').value;
+  const dir=document.getElementById('f-dir').value.trim();
+  const notas=document.getElementById('f-notas').value.trim();
+  const venc=document.getElementById('f-venc').value||addMes(fecha);
+  const msg=document.getElementById('msg-form');
+  if(!nombre||!monto||!fecha){msg.innerHTML='<div class="alert alert-red" style="margin-top:10px;">Completá nombre, monto y fecha.</div>';return;}
+  let tasa;
+  if(tipo==='manual'){
+    tasa=parseFloat(document.getElementById('f-tasa-manual').value);
+    if(!tasa||tasa<=0){msg.innerHTML='<div class="alert alert-red" style="margin-top:10px;">Ingresá la tasa manual.</div>';return;}
+  } else { tasa=tasaBase(tipo); }
+  const idC=nombre.toLowerCase().replace(/\s+/g,'_')+'_'+(tel.replace(/\D/g,'')||'0000').slice(-4);
+  P.push({id:Date.now().toString(),id_cliente:idC,nombre,telefono:tel,direccion:dir,tipo,monto,tasa,fechaInicio:fecha,vencimiento:venc,notas,estado:'activo',renovaciones:0});
+  guardarLS(P);
+  msg.innerHTML='<div class="alert alert-green" style="margin-top:10px;">Préstamo guardado correctamente.</div>';
+  ['f-nombre','f-tel','f-dir','f-monto','f-notas','f-tasa-manual'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-venc').value='';
+  document.getElementById('preview-box').innerHTML='';
+  document.getElementById('f-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('f-tipo').value='conocido';
+  document.getElementById('f-tasa-manual').style.display='none';
+  document.getElementById('f-tasa-display').style.display='block';
+  setTimeout(()=>{msg.innerHTML='';},3000);
+}
+
+function cobrado(id){
+  const p=P.find(x=>x.id===id); if(!p) return;
+  const d=deuda(p);
+  const msg='Cobro total a '+p.nombre+':\n\nCapital devuelto: '+pesos(d.cap)+'\nInterés cobrado: '+pesos(d.int)+(d.rec>0?'\nRecargo mora: '+pesos(d.rec):'')+'\n\nTOTAL RECIBIDO: '+pesos(d.total)+'\n\n¿Confirmar cobro total?';
+  if(confirm(msg)){
+    p.estado='pagado'; p.fechaPago=new Date().toISOString().split('T')[0];
+    HIST.push({id:Date.now().toString(),id_cliente:p.id_cliente,nombre:p.nombre,tipo:'pago_total',fecha:new Date().toISOString(),capital:p.monto,tasa:p.tasa,interesCobrado:d.int,recargoCobrado:d.rec,totalCobrado:d.total});
+    guardarLS(P); guardarHist(HIST); renderClientes(); renderDash();
+  }
+}
+
+function renovar(id){
+  const p=P.find(x=>x.id===id); if(!p) return;
+  if(p.renovaciones>=1){alert('Este préstamo ya fue renovado una vez. No se permiten más renovaciones.');return;}
+  const nt=p.tasa+5, int=p.monto*p.tasa/100, d=deuda(p);
+  const nf=new Date().toISOString().split('T')[0], nv=addMes(nf);
+  const msg='Renovación para '+p.nombre+':\n\nEl cliente paga SOLO el interés:\n  Interés cobrado: '+pesos(int)+(d.rec>0?'\n  Recargo mora: '+pesos(d.rec):'')+'\n  Total a cobrar HOY: '+pesos(int+d.rec)+'\n\nEl capital ('+pesos(p.monto)+') se renueva:\n  Nueva tasa: '+nt+'%\n  Nuevo interés: '+pesos(p.monto*nt/100)+'\n  Nueva devolución: '+fmtFecha(nv)+'\n\n¿Confirmar renovación?';
+  if(confirm(msg)){
+    HIST.push({id:Date.now().toString(),id_cliente:p.id_cliente,nombre:p.nombre,tipo:'renovacion',fecha:new Date().toISOString(),capital:p.monto,tasa:p.tasa,interesCobrado:int,recargoCobrado:d.rec,totalCobrado:int+d.rec,nuevaTasa:nt});
+    p.estado='renovado'; p.tasa=nt; p.renovaciones=(p.renovaciones||0)+1; p.fechaInicio=nf; p.vencimiento=nv;
+    guardarLS(P); guardarHist(HIST); renderClientes(); renderDash();
+  }
+}
+
+function eliminar(id){
+  if(confirm('¿Eliminar este préstamo? No se puede deshacer.')){
+    P=P.filter(x=>x.id!==id); guardarLS(P); renderClientes(); renderDash();
+  }
+}
+
+function pedirNotif(){
+  if(!('Notification' in window)){alert('Para notificaciones en iPhone:\n1. Abrí Safari\n2. Compartir → Agregar a pantalla de inicio\n3. Abrí la app desde el ícono\n4. Tocá este botón nuevamente');return;}
+  Notification.requestPermission().then(p=>{
+    if(p==='granted') alert('Notificaciones activadas.');
+    else alert('Para activar: Configuración → Safari → Notificaciones → Permitir.');
+  });
+}
+
+const hoy=new Date();
+document.getElementById('fecha-hoy').textContent=hoy.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('f-fecha').value=hoy.toISOString().split('T')[0];
+renderDash();
+mostrarBanner();
+</script>
+</body>
+</html>
